@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 
 #[zero_copy]
 #[derive(InitSpace, Debug)]
+#[repr(C, packed)]
 /// Parameter that set by the protocol
 pub struct StaticParameters {
     /// Used for base fee calculation. base_fee_rate = base_factor * bin_step
@@ -106,6 +107,7 @@ impl Default for StaticParameters {
 
 #[zero_copy]
 #[derive(InitSpace, Default, Debug)]
+#[repr(C, packed)]
 /// Parameters that changes based on dynamic of the market
 pub struct VariableParameters {
     /// Volatility accumulator measure the number of bin crossed since reference bin ID. Normally (without filter period taken into consideration), reference bin ID is the active bin of last swap.

@@ -278,12 +278,14 @@ pub fn get_bin_array_pubkeys_for_swap(
 mod tests {
     use super::*;
     use anchor_client::anchor_lang::AccountDeserialize;
+    use anchor_client::solana_sdk;
     use anchor_client::solana_sdk::clock::Clock;
     use anchor_client::{
         solana_client::nonblocking::rpc_client::RpcClient,
         solana_sdk::{pubkey::Pubkey, signature::Keypair},
         Client, Cluster,
     };
+    use std::time;
     use std::{rc::Rc, str::FromStr};
 
     /// Get on chain clock
@@ -296,23 +298,28 @@ mod tests {
 
         Ok(clock_state)
     }
+    pub fn deserialize_account<T: Copy>(account: &solana_sdk::account::Account, is_anchor_account: bool) -> Result<T> {
+        let mut account_data = account.data.as_slice();
+        if is_anchor_account {
+            account_data = &account_data[8..std::mem::size_of::<T>() + 8];
+        }
+        Ok(unsafe { *(&account_data[0] as *const u8 as *const T) })
+    }
 
     #[tokio::test]
     async fn test_swap_quote_exact_out() {
         // RPC client. No gPA is required.
-        let rpc_client = RpcClient::new(Cluster::Mainnet.url().to_string());
+        let rpc_client = RpcClient::new("https://solana-mainnet.core.chainstack.com/5fb086391c34ff12377fc008d6afc63f".to_string());
 
-        let client = Client::new(
-            Cluster::Custom(rpc_client.url(), rpc_client.url()),
-            Rc::new(Keypair::new()),
-        );
-
-        let program = client.program(lb_clmm::ID).unwrap();
 
         let SOL_USDC = Pubkey::from_str("HTvjzsfX3yU6BUodCjZ5vZkUrAxMDTrBs3CJaq43ashR").unwrap();
 
-        let lb_pair = program.account::<LbPair>(SOL_USDC).await.unwrap();
+        // let lb_pair = program.account::<LbPair>(SOL_USDC).await.unwrap();
+        let lp_account = rpc_client.get_account(&SOL_USDC).await.unwrap();
 
+        let mut start = time::Instant::now();
+
+        let lb_pair  = deserialize_account::<LbPair>(&lp_account, true).unwrap();
         // 3 bin arrays to left, and right is enough to cover most of the swap, and stay under 1.4m CU constraint.
         // Get 3 bin arrays to the left from the active bin
         let left_bin_array_pubkeys =
@@ -328,18 +335,23 @@ mod tests {
             .chain(right_bin_array_pubkeys.into_iter())
             .collect::<Vec<Pubkey>>();
 
+        println!("find bin time: {:?}", start.elapsed());
+
         let accounts = rpc_client
             .get_multiple_accounts(&bin_array_pubkeys)
             .await
             .unwrap();
 
+        // let a = accounts[0].clone().unwrap();
+        // let tmp = deserialize_account::<BinArray>(&a, true).unwrap();
         let bin_arrays = accounts
             .into_iter()
             .zip(bin_array_pubkeys.into_iter())
             .map(|(account, key)| {
                 (
                     key,
-                    BinArray::try_deserialize(&mut account.unwrap().data.as_ref()).unwrap(),
+                    deserialize_account::<BinArray>(&account.unwrap(), true).unwrap(),
+                    // BinArray::try_deserialize(&mut account.unwrap().data.as_ref()).unwrap(),
                 )
             })
             .collect::<HashMap<_, _>>();
@@ -349,7 +361,8 @@ mod tests {
 
         let out_sol_amount = 1_000_000_000;
         let clock = get_clock(rpc_client).await.unwrap();
-
+        
+        start = time::Instant::now();
         let quote_result = quote_exact_out(
             SOL_USDC,
             &lb_pair,
@@ -425,6 +438,8 @@ mod tests {
             in_amount as f64 / sol_token_multiplier,
             quote_result.amount_out as f64 / usdc_token_multiplier
         );
+        println!("quote time: {:?}", time::Instant::now().duration_since(start));
+
     }
 
     #[tokio::test]

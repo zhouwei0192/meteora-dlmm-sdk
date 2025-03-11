@@ -46,6 +46,7 @@ pub enum PairStatus {
 
 #[zero_copy]
 #[derive(InitSpace, Default, Debug)]
+#[repr(C, packed)]
 pub struct ProtocolFee {
     pub amount_x: u64,
     pub amount_y: u64,
@@ -53,6 +54,7 @@ pub struct ProtocolFee {
 
 #[account(zero_copy)]
 #[derive(InitSpace, Debug)]
+#[repr(C, packed)]
 pub struct LbPair {
     pub parameters: StaticParameters,
     pub v_parameters: VariableParameters,
@@ -156,6 +158,7 @@ impl Default for LbPair {
 /// Stores the state relevant for tracking liquidity mining rewards
 #[zero_copy]
 #[derive(InitSpace, Default, Debug, PartialEq)]
+#[repr(C, packed)]
 pub struct RewardInfo {
     /// Reward token mint.
     pub mint: Pubkey,

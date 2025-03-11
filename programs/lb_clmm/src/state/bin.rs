@@ -68,6 +68,7 @@ pub struct SwapResult {
 
 #[zero_copy]
 #[derive(Default, Debug, InitSpace)]
+#[repr(C, packed)]
 pub struct Bin {
     /// Amount of token X in the bin. This already excluded protocol fees.
     pub amount_x: u64,
@@ -375,6 +376,7 @@ pub enum LayoutVersion {
 
 #[account(zero_copy)]
 #[derive(Debug, InitSpace)]
+#[repr(C, packed)]
 /// An account to contain a range of bin. For example: Bin 100 <-> 200.
 /// For example:
 /// BinArray index: 0 contains bin 0 <-> 599
