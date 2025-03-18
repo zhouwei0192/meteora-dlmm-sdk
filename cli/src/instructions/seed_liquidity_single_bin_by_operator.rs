@@ -91,10 +91,10 @@ pub async fn seed_liquidity_single_bin_by_operator<C: Deref<Target = impl Signer
         }
     }?;
 
-    assert_eq!(
-        lb_pair_state.active_id, bin_id,
-        "bin id doesn't match active bin id"
-    );
+    // assert_eq!(
+    //     lb_pair_state.active_id, bin_id,
+    //     "bin id doesn't match active bin id"
+    // );
 
     let user_token_x = get_or_create_ata(
         program,

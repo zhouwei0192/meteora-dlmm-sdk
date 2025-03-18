@@ -27,9 +27,14 @@ pub async fn show_pair<C: Deref<Target = impl Signer> + Clone>(
 ) -> Result<()> {
     let lb_pair_state: LbPair = program.account(lb_pair).await?;
 
+    
     let lb_pair_filter = RpcFilterType::Memcmp(Memcmp::new_base58_encoded(16, &lb_pair.to_bytes()));
     let mut bin_arrays: Vec<(Pubkey, BinArray)> = program.accounts(vec![lb_pair_filter]).await?;
-    bin_arrays.sort_by(|a, b| a.1.index.cmp(&b.1.index));
+    bin_arrays.sort_by(|a, b| {
+        let index_a = a.1.index;  // 复制数据，避免直接引用 packed 字段
+        let index_b = b.1.index;
+        index_a.cmp(&index_b)
+    });
 
     println!("{:#?}", lb_pair_state);
 
@@ -39,10 +44,10 @@ pub async fn show_pair<C: Deref<Target = impl Signer> + Clone>(
         for bin in bin_array.bins.iter() {
             let total_amount = bin.amount_x + bin.amount_y;
             if total_amount > 0 {
-                println!(
-                    "Bin: {}, X: {}, Y: {}",
-                    lower_bin_id, bin.amount_x, bin.amount_y
-                );
+                // println!(
+                //     "Bin: {}, X: {}, Y: {}",
+                //     lower_bin_id, bin.amount_x, bin.amount_y
+                // );
             }
             lower_bin_id += 1;
         }

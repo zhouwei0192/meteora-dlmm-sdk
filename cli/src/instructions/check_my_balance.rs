@@ -40,7 +40,7 @@ pub async fn check_my_balance<C: Deref<Target = impl Signer> + Clone>(
 
     let lb_pair_state: LbPair = program.account(lb_pair).await?;
 
-    println!("active bin {}", lb_pair_state.active_id);
+    // println!("active bin {}", lb_pair_state.active_id);
 
     let bin_step = lb_pair_state.bin_step;
     let min_price_per_lamport = price_per_token_to_per_lamport(

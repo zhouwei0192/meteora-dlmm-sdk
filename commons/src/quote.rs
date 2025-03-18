@@ -361,7 +361,7 @@ mod tests {
 
         let out_sol_amount = 1_000_000_000;
         let clock = get_clock(rpc_client).await.unwrap();
-        
+        println!("clock: {:?}", clock);
         start = time::Instant::now();
         let quote_result = quote_exact_out(
             SOL_USDC,
